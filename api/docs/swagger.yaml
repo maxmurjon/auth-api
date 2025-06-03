@@ -1,0 +1,197 @@
+definitions:
+  models.CreateUser:
+    properties:
+      full_name:
+        type: string
+      password:
+        description: asl parol (so‘ngra hash qilinadi)
+        type: string
+      phone:
+        description: telefon bazadagi nomga mos
+        type: string
+      role:
+        description: 'rol nomi, masalan: "admin", "user", "manager" va h.k.'
+        type: string
+    required:
+    - full_name
+    - password
+    - phone
+    - role
+    type: object
+  models.DefaultError:
+    properties:
+      message:
+        type: string
+    type: object
+  models.GetListUserResponse:
+    properties:
+      count:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+    type: object
+  models.SuccessResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+    type: object
+  models.UpdateUser:
+    properties:
+      full_name:
+        type: string
+      id:
+        type: string
+      password_hash:
+        description: password xesh sifatida
+        type: string
+      phone:
+        type: string
+    required:
+    - id
+    type: object
+  models.User:
+    properties:
+      created_at:
+        type: string
+      full_name:
+        description: bazada full_name
+        type: string
+      id:
+        type: string
+      password_hash:
+        description: bazada password_hash deb qo'yaylik (parol xesh)
+        type: string
+      phone:
+        description: bazada phone
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /createuser:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with given data
+      parameters:
+      - description: User to create
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+      summary: Create a new user
+      tags:
+      - users
+  /deleteuser/{id}:
+    delete:
+      description: Delete user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+      summary: Delete user by ID
+      tags:
+      - users
+  /updateuser:
+    put:
+      consumes:
+      - application/json
+      description: Update user details by ID
+      parameters:
+      - description: User data to update
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+      summary: Update an existing user
+      tags:
+      - users
+  /user/{id}:
+    get:
+      description: Get user details by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+      summary: Get user by ID
+      tags:
+      - users
+  /users:
+    get:
+      description: Get paginated list of users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetListUserResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+      summary: Get list of users
+      tags:
+      - users
+swagger: "2.0"
