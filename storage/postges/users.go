@@ -3,10 +3,11 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"smartlogistics/models"
-	"smartlogistics/pkg/helper/helper"
 
 	"github.com/google/uuid"
+	"github.com/maxmurjon/auth-api/models"
+	"github.com/maxmurjon/auth-api/pkg/helper"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -14,53 +15,52 @@ type userRepo struct {
 	db *pgxpool.Pool
 }
 
-func (u *userRepo) Create(ctx context.Context, req *models.CreateUser) (*models.UserPrimaryKey, error) {
+func NewUserRepo(db *pgxpool.Pool) *userRepo {
+	return &userRepo{db: db}
+}
+
+func (u *userRepo) Create(ctx context.Context, req *models.CreateUser) (*models.PrimaryKey, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
 
-	query := `INSERT INTO users (
-		id,
-		full_name,
-		password_hash,
-		phone,
-		role,
-		created_at
-	) VALUES ($1, $2, $3, $4, $5, now())`
+	query := `
+		INSERT INTO users (
+			id,
+			user_name,
+			password_hash,
+			created_at
+		) VALUES ($1, $2, $3, now())
+	`
 
 	_, err = u.db.Exec(ctx, query,
 		id.String(),
-		req.FullName,
+		req.UserName,
 		req.Password,
-		req.Phone,
-		req.Role,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &models.UserPrimaryKey{Id: id.String()}, nil
+	return &models.PrimaryKey{Id: id.String()}, nil
 }
 
-func (u *userRepo) GetByID(ctx context.Context, req *models.UserPrimaryKey) (*models.User, error) {
+func (u *userRepo) GetByID(ctx context.Context, req *models.PrimaryKey) (*models.User, error) {
 	res := &models.User{}
 	query := `
-        SELECT
-            id,
-            full_name,
-            phone,
-            password_hash,
-            created_at
-        FROM users
-        WHERE id = $1`
+		SELECT
+			id,
+			user_name,
+			password_hash
+		FROM users
+		WHERE id = $1
+	`
 
 	err := u.db.QueryRow(ctx, query, req.Id).Scan(
 		&res.Id,
-		&res.FullName,
-		&res.Phone,
+		&res.UserName,
 		&res.Password,
-		&res.CreatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -69,24 +69,21 @@ func (u *userRepo) GetByID(ctx context.Context, req *models.UserPrimaryKey) (*mo
 	return res, nil
 }
 
-func (u *userRepo) GetByPhone(ctx context.Context, login *models.Login) (*models.User, error) {
+func (u *userRepo) GetByUserName(ctx context.Context, userName string) (*models.User, error) {
 	res := &models.User{}
 	query := `
-        SELECT
-            id,
-            full_name,
-            phone,
-            password_hash,
-            created_at
-        FROM users
-        WHERE phone = $1`
+		SELECT
+			id,
+			user_name,
+			password_hash
+		FROM users
+		WHERE user_name = $1
+	`
 
-	err := u.db.QueryRow(ctx, query, login.PhoneNumber).Scan(
+	err := u.db.QueryRow(ctx, query, userName).Scan(
 		&res.Id,
-		&res.FullName,
-		&res.Phone,
+		&res.UserName,
 		&res.Password,
-		&res.CreatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -98,24 +95,23 @@ func (u *userRepo) GetByPhone(ctx context.Context, login *models.Login) (*models
 func (u *userRepo) GetList(ctx context.Context, req *models.GetListUserRequest) (*models.GetListUserResponse, error) {
 	res := &models.GetListUserResponse{}
 	params := make(map[string]interface{})
-	var arr []interface{}
 
-	query := `SELECT
-		id,
-		full_name,
-		phone,
-		password_hash,
-		created_at
-	FROM users`
+	query := `
+		SELECT
+			id,
+			user_name,
+			password_hash
+		FROM users
+	`
 
 	filter := " WHERE 1=1"
 	order := " ORDER BY created_at DESC"
 	offset := " OFFSET 0"
 	limit := " LIMIT 10"
 
-	if len(req.Search) > 0 {
+	if req.Search != "" {
 		params["search"] = req.Search
-		filter += " AND full_name ILIKE '%' || :search || '%'"
+		filter += " AND user_name ILIKE '%' || :search || '%'"
 	}
 
 	if req.Offset > 0 {
@@ -128,37 +124,33 @@ func (u *userRepo) GetList(ctx context.Context, req *models.GetListUserRequest) 
 		limit = " LIMIT :limit"
 	}
 
-	cQ := `SELECT count(1) FROM users` + filter
-	cQ, arr = helper.ReplaceQueryParams(cQ, params)
-	err := u.db.QueryRow(ctx, cQ, arr...).Scan(&res.Count)
+	countQuery := `SELECT count(1) FROM users` + filter
+	countQuery, args := helper.ReplaceQueryParams(countQuery, params)
+	err := u.db.QueryRow(ctx, countQuery, args...).Scan(&res.Count)
 	if err != nil {
 		return res, err
 	}
 
-	q := query + filter + order + offset + limit
-	q, arr = helper.ReplaceQueryParams(q, params)
+	finalQuery := query + filter + order + offset + limit
+	finalQuery, args = helper.ReplaceQueryParams(finalQuery, params)
 
-	rows, err := u.db.Query(ctx, q, arr...)
+	rows, err := u.db.Query(ctx, finalQuery, args...)
 	if err != nil {
 		return res, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		obj := &models.User{}
-
+		user := &models.User{}
 		err = rows.Scan(
-			&obj.Id,
-			&obj.FullName,
-			&obj.Phone,
-			&obj.Password,
-			&obj.CreatedAt,
+			&user.Id,
+			&user.UserName,
+			&user.Password,
 		)
 		if err != nil {
 			return res, err
 		}
-
-		res.Users = append(res.Users, obj)
+		res.Users = append(res.Users, user)
 	}
 
 	return res, nil
@@ -169,26 +161,22 @@ func (u *userRepo) Update(ctx context.Context, req *models.UpdateUser) (int64, e
 	params := []interface{}{}
 	counter := 1
 
-
-	if req.FullName != nil {
-		query += `full_name = $` + fmt.Sprint(counter) + `, `
-		params = append(params, *req.FullName)
+	if req.UserName != "" {
+		query += `user_name = $` + fmt.Sprint(counter) + `, `
+		params = append(params, req.UserName)
 		counter++
 	}
 
-	if req.Password != nil {
+	if req.Password != "" {
 		query += `password_hash = $` + fmt.Sprint(counter) + `, `
-		params = append(params, *req.Password)
+		params = append(params, req.Password)
 		counter++
 	}
 
-	if req.Phone != nil {
-		query += `phone = $` + fmt.Sprint(counter) + `, `
-		params = append(params, *req.Phone)
-		counter++
+	// Remove trailing comma and space
+	if len(params) == 0 {
+		return 0, nil // Nothing to update
 	}
-
-	
 
 	query = query[:len(query)-2] + ` WHERE id = $` + fmt.Sprint(counter)
 	params = append(params, req.Id)
@@ -201,7 +189,7 @@ func (u *userRepo) Update(ctx context.Context, req *models.UpdateUser) (int64, e
 	return result.RowsAffected(), nil
 }
 
-func (u *userRepo) Delete(ctx context.Context, req *models.UserPrimaryKey) (int64, error) {
+func (u *userRepo) Delete(ctx context.Context, req *models.PrimaryKey) (int64, error) {
 	query := `DELETE FROM users WHERE id = $1`
 
 	result, err := u.db.Exec(ctx, query, req.Id)

@@ -3,7 +3,8 @@ package handler
 import (
 	"context"
 	"net/http"
-	"smartlogistics/models"
+
+	"github.com/maxmurjon/auth-api/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,7 +37,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	user, err := h.strg.User().GetByID(context.Background(), &models.UserPrimaryKey{Id: id.Id})
+	user, err := h.strg.User().GetByID(context.Background(), &models.PrimaryKey{Id: id.Id})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.DefaultError{
 			Message: "Failed to retrieve created user: " + err.Error(),
@@ -122,7 +123,7 @@ func (h *Handler) GetUsersList(c *gin.Context) {
 func (h *Handler) GetUsersByIDHandler(c *gin.Context) {
 	id := c.Param("id")
 
-	user, err := h.strg.User().GetByID(context.Background(), &models.UserPrimaryKey{Id: id})
+	user, err := h.strg.User().GetByID(context.Background(), &models.PrimaryKey{Id: id})
 	if err != nil {
 		c.JSON(http.StatusNotFound, models.DefaultError{
 			Message: "User not found: " + err.Error(),
@@ -148,7 +149,7 @@ func (h *Handler) GetUsersByIDHandler(c *gin.Context) {
 func (h *Handler) DeleteUser(c *gin.Context) {
 	id := c.Param("id")
 
-	deletedUser, err := h.strg.User().Delete(context.Background(), &models.UserPrimaryKey{Id: id})
+	deletedUser, err := h.strg.User().Delete(context.Background(), &models.PrimaryKey{Id: id})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.DefaultError{
 			Message: "Failed to delete user: " + err.Error(),

@@ -1,13 +1,13 @@
 package api
 
 import (
-	"smartlogistics/api/handler"
-	"smartlogistics/config"
+	"github.com/maxmurjon/auth-api/api/handler"
+	"github.com/maxmurjon/auth-api/config"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/maxmurjon/auth-api/api/docs"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "smartlogistics/api/docs" 
 )
 
 func SetUpAPI(r *gin.Engine, h handler.Handler, cfg config.Config) {
@@ -20,12 +20,6 @@ func SetUpAPI(r *gin.Engine, h handler.Handler, cfg config.Config) {
 	r.GET("/user/:id", h.GetUsersByIDHandler)
 	r.DELETE("/deleteuser/:id", h.DeleteUser)
 
-	//Product Endpoints
-	r.POST("/createproduct", h.CreateProduct)
-	r.PUT("/updateproduct", h.UpdateProduct)
-	r.GET("/products", h.GetProductsList)
-	r.GET("/product/:id", h.GetProductsByIDHandler)
-	r.DELETE("/deleteproduct/:id", h.DeleteProduct)
 
 	url := ginSwagger.URL("swagger/doc.json")
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))

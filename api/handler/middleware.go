@@ -3,7 +3,8 @@ package handler
 import (
 	"fmt"
 	"net/http"
-	"smartlogistics/pkg/helper/helper"
+
+	"github.com/maxmurjon/auth-api/pkg/helper"
 
 	"github.com/gin-gonic/gin"
 )

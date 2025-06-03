@@ -1,13 +1,13 @@
 package handler
 
 import (
-	"smartlogistics/config"
-	"smartlogistics/storage"
+	"github.com/maxmurjon/auth-api/config"
+	"github.com/maxmurjon/auth-api/storage"
 )
 
 type Handler struct {
-	cfg         *config.Config
-	strg        storage.StorageRepoI
+	cfg  *config.Config
+	strg storage.StorageRepoI
 }
 
 type Response struct {
@@ -18,7 +18,7 @@ type Response struct {
 
 func NewHandler(cfg *config.Config, storage storage.StorageRepoI) *Handler {
 	return &Handler{
-		cfg:         cfg,
-		strg:        storage,	
+		cfg:  cfg,
+		strg: storage,
 	}
 }

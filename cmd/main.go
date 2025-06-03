@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"smartlogistics/api"
-	"smartlogistics/api/handler"
-	"smartlogistics/config"
 
-	postgres "smartlogistics/storage/postges"
+	"github.com/maxmurjon/auth-api/api"
+	"github.com/maxmurjon/auth-api/api/handler"
+	"github.com/maxmurjon/auth-api/config"
+
+	postgres "github.com/maxmurjon/auth-api/storage/postges"
 
 	"github.com/gin-gonic/gin"
 )
