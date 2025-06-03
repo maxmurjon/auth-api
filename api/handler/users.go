@@ -13,13 +13,14 @@ import (
 // @Summary      Create a new user
 // @Description  Create a new user with given data
 // @Tags         users
+// @Security     BearerAuth
 // @Accept       json
 // @Produce      json
 // @Param        user  body      models.CreateUser  true  "User to create"
 // @Success      200   {object}  models.SuccessResponse
 // @Failure      400   {object}  models.DefaultError
 // @Failure      500   {object}  models.DefaultError
-// @Router       /createuser [post]
+// @Router       /users [post]
 func (h *Handler) CreateUser(c *gin.Context) {
 	var entity *models.CreateUser
 	if err := c.BindJSON(&entity); err != nil {
@@ -55,13 +56,14 @@ func (h *Handler) CreateUser(c *gin.Context) {
 // @Summary      Update an existing user
 // @Description  Update user details by ID
 // @Tags         users
+// @Security     BearerAuth
 // @Accept       json
 // @Produce      json
 // @Param        user  body      models.UpdateUser  true  "User data to update"
 // @Success      200   {object}  models.SuccessResponse
 // @Failure      400   {object}  models.DefaultError
 // @Failure      500   {object}  models.DefaultError
-// @Router       /updateuser [put]
+// @Router       /users [put]
 func (h *Handler) UpdateUser(c *gin.Context) {
 	var entity models.UpdateUser
 	if err := c.BindJSON(&entity); err != nil {
@@ -95,6 +97,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 // @Summary      Get list of users
 // @Description  Get paginated list of users
 // @Tags         users
+// @Security     BearerAuth
 // @Produce      json
 // @Success      200  {object}  models.GetListUserResponse
 // @Failure      500  {object}  models.DefaultError
@@ -115,11 +118,12 @@ func (h *Handler) GetUsersList(c *gin.Context) {
 // @Summary      Get user by ID
 // @Description  Get user details by ID
 // @Tags         users
+// @Security     BearerAuth
 // @Produce      json
 // @Param        id   path      string  true  "User ID"
 // @Success      200  {object}  models.SuccessResponse
 // @Failure      404  {object}  models.DefaultError
-// @Router       /user/{id} [get]
+// @Router       /users/{id} [get]
 func (h *Handler) GetUsersByIDHandler(c *gin.Context) {
 	id := c.Param("id")
 
@@ -141,11 +145,12 @@ func (h *Handler) GetUsersByIDHandler(c *gin.Context) {
 // @Summary      Delete user by ID
 // @Description  Delete user by ID
 // @Tags         users
+// @Security     BearerAuth
 // @Produce      json
 // @Param        id   path      string  true  "User ID"
 // @Success      200  {object}  models.SuccessResponse
 // @Failure      500  {object}  models.DefaultError
-// @Router       /deleteuser/{id} [delete]
+// @Router       /users/{id} [delete]
 func (h *Handler) DeleteUser(c *gin.Context) {
 	id := c.Param("id")
 

@@ -1,22 +1,10 @@
 definitions:
   models.CreateUser:
     properties:
-      full_name:
+      password_hash:
         type: string
-      password:
-        description: asl parol (so‘ngra hash qilinadi)
+      user_name:
         type: string
-      phone:
-        description: telefon bazadagi nomga mos
-        type: string
-      role:
-        description: 'rol nomi, masalan: "admin", "user", "manager" va h.k.'
-        type: string
-    required:
-    - full_name
-    - password
-    - phone
-    - role
     type: object
   models.DefaultError:
     properties:
@@ -32,6 +20,20 @@ definitions:
           $ref: '#/definitions/models.User'
         type: array
     type: object
+  models.Login:
+    properties:
+      password:
+        type: string
+      user_name:
+        type: string
+    type: object
+  models.LoginResponse:
+    properties:
+      token:
+        type: string
+      user_data:
+        $ref: '#/definitions/models.User'
+    type: object
   models.SuccessResponse:
     properties:
       data: {}
@@ -40,38 +42,117 @@ definitions:
     type: object
   models.UpdateUser:
     properties:
-      full_name:
-        type: string
       id:
         type: string
       password_hash:
-        description: password xesh sifatida
         type: string
-      phone:
+      user_name:
         type: string
     required:
     - id
     type: object
   models.User:
     properties:
-      created_at:
-        type: string
-      full_name:
-        description: bazada full_name
-        type: string
       id:
         type: string
       password_hash:
-        description: bazada password_hash deb qo'yaylik (parol xesh)
         type: string
-      phone:
-        description: bazada phone
+      user_name:
         type: string
     type: object
 info:
   contact: {}
+  description: This is an authentication API
+  title: Auth API
+  version: "1.0"
 paths:
-  /createuser:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT token
+      parameters:
+      - description: User login data
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/models.Login'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LoginResponse'
+        "400":
+          description: Invalid input or user not found
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+        "401":
+          description: Unauthorized, invalid credentials
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+      summary: Login user
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Create new user with username and password
+      parameters:
+      - description: User registration data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateUser'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+        "409":
+          description: User already exists
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+      summary: Register new user
+      tags:
+      - auth
+  /users:
+    get:
+      description: Get paginated list of users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetListUserResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+      security:
+      - BearerAuth: []
+      summary: Get list of users
+      tags:
+      - users
     post:
       consumes:
       - application/json
@@ -98,33 +179,11 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.DefaultError'
+      security:
+      - BearerAuth: []
       summary: Create a new user
       tags:
       - users
-  /deleteuser/{id}:
-    delete:
-      description: Delete user by ID
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.SuccessResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/models.DefaultError'
-      summary: Delete user by ID
-      tags:
-      - users
-  /updateuser:
     put:
       consumes:
       - application/json
@@ -151,10 +210,36 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.DefaultError'
+      security:
+      - BearerAuth: []
       summary: Update an existing user
       tags:
       - users
-  /user/{id}:
+  /users/{id}:
+    delete:
+      description: Delete user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.DefaultError'
+      security:
+      - BearerAuth: []
+      summary: Delete user by ID
+      tags:
+      - users
     get:
       description: Get user details by ID
       parameters:
@@ -174,24 +259,14 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/models.DefaultError'
+      security:
+      - BearerAuth: []
       summary: Get user by ID
       tags:
       - users
-  /users:
-    get:
-      description: Get paginated list of users
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.GetListUserResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/models.DefaultError'
-      summary: Get list of users
-      tags:
-      - users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

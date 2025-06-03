@@ -1,4 +1,14 @@
+// @title Auth API
+// @version 1.0
+// @description This is an authentication API using JWT in Golang.
+// @host localhost:8080
+// @BasePath /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 package main
+
 
 import (
 	"fmt"

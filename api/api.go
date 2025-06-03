@@ -10,16 +10,27 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// @title Auth API
+// @version 1.0
+// @description This is an authentication API
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func SetUpAPI(r *gin.Engine, h handler.Handler, cfg config.Config) {
 	r.Use(customCORSMiddleware())
 
-	// Users Endpoints
-	r.POST("/createuser", h.CreateUser)
-	r.PUT("/updateuser", h.UpdateUser)
-	r.GET("/users", h.GetUsersList)
-	r.GET("/user/:id", h.GetUsersByIDHandler)
-	r.DELETE("/deleteuser/:id", h.DeleteUser)
+	r.POST("/login", h.Login)
+	r.POST("/register", h.Register)
 
+	userGroup := r.Group("/users")
+	userGroup.Use(h.AuthMiddleware()) // middleware ni qo‘llash
+	{
+		userGroup.POST("/", h.CreateUser)
+		userGroup.PUT("/", h.UpdateUser)
+		userGroup.GET("/", h.GetUsersList)
+		userGroup.GET("/:id", h.GetUsersByIDHandler)
+		userGroup.DELETE("/:id", h.DeleteUser)
+	}
 
 	url := ginSwagger.URL("swagger/doc.json")
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
